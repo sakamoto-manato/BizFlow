@@ -1365,21 +1365,27 @@ const LoginPage = ({ onAuth }) => {
   const [loading, setLoading] = useState(false);
   const [hoverBtn, setHoverBtn] = useState(false);
 
+  // デモ用アカウント（仮）
+  const DEMO_ACCOUNTS = [
+    { id: 1, email: 'admin@bizflow.jp', password: 'password123', display_name: '管理者' },
+  ];
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
     setLoading(true);
     try {
       if (isLogin) {
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
-        if (error) throw error;
+        const found = DEMO_ACCOUNTS.find(a => a.email === email && a.password === password);
+        if (!found) throw new Error("メールアドレスまたはパスワードが正しくありません");
+        const user = { id: found.id, email: found.email, display_name: found.display_name };
+        localStorage.setItem('user', JSON.stringify(user));
+        onAuth(user);
       } else {
-        const { error } = await supabase.auth.signUp({
-          email,
-          password,
-          options: { data: { display_name: displayName } },
-        });
-        if (error) throw error;
+        if (DEMO_ACCOUNTS.some(a => a.email === email)) throw new Error("このメールアドレスは既に登録されています");
+        const user = { id: Date.now(), email, display_name: displayName || email.split('@')[0] };
+        localStorage.setItem('user', JSON.stringify(user));
+        onAuth(user);
       }
     } catch (err) {
       setError(err.message);
@@ -1502,30 +1508,21 @@ const pages = {
 };
 
 export default function App() {
-  const [session, setSession] = useState(null);
-  const [authLoading, setAuthLoading] = useState(true);
+  const [user, setUser] = useState(() => {
+    try { return JSON.parse(localStorage.getItem('user')); } catch { return null; }
+  });
   const [active, setActive] = useState("dashboard");
   const [hoveredNav, setHoveredNav] = useState(null);
   const [hoverLogout, setHoverLogout] = useState(false);
   const { loading, data } = useSupabaseData();
   const Page = pages[active];
 
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setAuthLoading(false);
-    });
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-    });
-    return () => subscription.unsubscribe();
-  }, []);
-
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
+  const handleLogout = () => {
+    localStorage.removeItem('user');
+    setUser(null);
   };
 
-  const userDisplayName = session?.user?.user_metadata?.display_name || session?.user?.email?.split("@")[0] || "";
+  const userDisplayName = user?.display_name || user?.email?.split("@")[0] || "";
   const userInitial = userDisplayName ? userDisplayName.charAt(0).toUpperCase() : "U";
 
   const pageProps = data ? {
@@ -1554,22 +1551,11 @@ export default function App() {
     select option { background: ${C.bg}; color: ${C.text}; }
   `;
 
-  if (authLoading) {
+  if (!user) {
     return (
       <>
         <style>{globalStyles}</style>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100vh", background: C.bg }}>
-          <LoadingSpinner />
-        </div>
-      </>
-    );
-  }
-
-  if (!session) {
-    return (
-      <>
-        <style>{globalStyles}</style>
-        <LoginPage />
+        <LoginPage onAuth={setUser} />
       </>
     );
   }

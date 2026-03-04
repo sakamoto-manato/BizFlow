@@ -108,27 +108,15 @@ FROM receivables r
 JOIN clients c ON c.id = r.client_id;
 
 -- ============================================
--- profiles（ユーザープロフィール）
+-- profiles（ユーザープロフィール — テーブルベース認証）
 -- ============================================
 CREATE TABLE profiles (
-  id           uuid PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+  id           bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  email        text NOT NULL UNIQUE,
+  password     text NOT NULL,
   display_name text NOT NULL DEFAULT '',
   created_at   timestamptz NOT NULL DEFAULT now()
 );
-
--- ユーザー作成時に自動で profiles レコードを生成するトリガー
-CREATE OR REPLACE FUNCTION public.handle_new_user()
-RETURNS trigger AS $$
-BEGIN
-  INSERT INTO public.profiles (id, display_name)
-  VALUES (NEW.id, COALESCE(NEW.raw_user_meta_data->>'display_name', ''));
-  RETURN NEW;
-END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
-
-CREATE TRIGGER on_auth_user_created
-  AFTER INSERT ON auth.users
-  FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
 
 -- ============================================
 -- RLS — authenticated ロールに全操作を許可
@@ -144,19 +132,16 @@ ALTER TABLE invoice_template_items ENABLE ROW LEVEL SECURITY;
 ALTER TABLE company_profile        ENABLE ROW LEVEL SECURITY;
 ALTER TABLE profiles               ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "authenticated_all" ON clients               FOR ALL TO authenticated USING (true) WITH CHECK (true);
-CREATE POLICY "authenticated_all" ON receivables            FOR ALL TO authenticated USING (true) WITH CHECK (true);
-CREATE POLICY "authenticated_all" ON products               FOR ALL TO authenticated USING (true) WITH CHECK (true);
-CREATE POLICY "authenticated_all" ON deposits               FOR ALL TO authenticated USING (true) WITH CHECK (true);
-CREATE POLICY "authenticated_all" ON employees              FOR ALL TO authenticated USING (true) WITH CHECK (true);
-CREATE POLICY "authenticated_all" ON salary_items           FOR ALL TO authenticated USING (true) WITH CHECK (true);
-CREATE POLICY "authenticated_all" ON salary_history         FOR ALL TO authenticated USING (true) WITH CHECK (true);
-CREATE POLICY "authenticated_all" ON invoice_template_items FOR ALL TO authenticated USING (true) WITH CHECK (true);
-CREATE POLICY "authenticated_all" ON company_profile        FOR ALL TO authenticated USING (true) WITH CHECK (true);
-
--- profiles: 自分のプロフィールのみ参照・更新可能
-CREATE POLICY "profiles_select_own" ON profiles FOR SELECT TO authenticated USING (auth.uid() = id);
-CREATE POLICY "profiles_update_own" ON profiles FOR UPDATE TO authenticated USING (auth.uid() = id) WITH CHECK (auth.uid() = id);
+CREATE POLICY "anon_all" ON clients               FOR ALL TO anon USING (true) WITH CHECK (true);
+CREATE POLICY "anon_all" ON receivables            FOR ALL TO anon USING (true) WITH CHECK (true);
+CREATE POLICY "anon_all" ON products               FOR ALL TO anon USING (true) WITH CHECK (true);
+CREATE POLICY "anon_all" ON deposits               FOR ALL TO anon USING (true) WITH CHECK (true);
+CREATE POLICY "anon_all" ON employees              FOR ALL TO anon USING (true) WITH CHECK (true);
+CREATE POLICY "anon_all" ON salary_items           FOR ALL TO anon USING (true) WITH CHECK (true);
+CREATE POLICY "anon_all" ON salary_history         FOR ALL TO anon USING (true) WITH CHECK (true);
+CREATE POLICY "anon_all" ON invoice_template_items FOR ALL TO anon USING (true) WITH CHECK (true);
+CREATE POLICY "anon_all" ON company_profile        FOR ALL TO anon USING (true) WITH CHECK (true);
+CREATE POLICY "anon_all" ON profiles               FOR ALL TO anon USING (true) WITH CHECK (true);
 
 -- ============================================
 -- SEED DATA
@@ -265,8 +250,8 @@ CREATE TABLE journal_entries (
 ALTER TABLE accounts        ENABLE ROW LEVEL SECURITY;
 ALTER TABLE journal_entries ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "authenticated_all" ON accounts        FOR ALL TO authenticated USING (true) WITH CHECK (true);
-CREATE POLICY "authenticated_all" ON journal_entries  FOR ALL TO authenticated USING (true) WITH CHECK (true);
+CREATE POLICY "anon_all" ON accounts        FOR ALL TO anon USING (true) WITH CHECK (true);
+CREATE POLICY "anon_all" ON journal_entries  FOR ALL TO anon USING (true) WITH CHECK (true);
 
 -- ============================================
 -- SEED: accounts（勘定科目 18科目）
@@ -311,3 +296,12 @@ OVERRIDING SYSTEM VALUE VALUES
   (5, '2026-02-28', 'JE-2026-005', '社会保険料 2月分',            13,  7,   71000);
 
 SELECT setval(pg_get_serial_sequence('journal_entries', 'id'), (SELECT MAX(id) FROM journal_entries));
+
+-- ============================================
+-- SEED: profiles（テスト用アカウント）
+-- ============================================
+INSERT INTO profiles (id, email, password, display_name)
+OVERRIDING SYSTEM VALUE VALUES
+  (1, 'admin@bizflow.jp', 'password123', '管理者');
+
+SELECT setval(pg_get_serial_sequence('profiles', 'id'), (SELECT MAX(id) FROM profiles));
