@@ -1,0 +1,710 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BizFlow v1.0 ツールマニュアル</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reset.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="styles.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+  <div class="reveal">
+    <div class="slides">
+
+      <!-- ====== 1. TITLE ====== -->
+      <section id="title" class="title-slide">
+        <div style="margin-bottom: 20px;">
+          <div style="display: inline-flex; align-items: center; justify-content: center; width: 64px; height: 64px; border-radius: 18px; background: linear-gradient(135deg, #0D9488, #0F766E); color: white; font-size: 28pt; font-weight: 800; font-family: 'DM Mono', monospace; box-shadow: 0 6px 24px rgba(13,148,136,0.3); margin-bottom: 16px;">B</div>
+        </div>
+        <h1>BizFlow v1.0<br>ツールマニュアル</h1>
+        <p class="text-muted" style="font-size: 16pt; margin-top: 14px;">インボイス制度対応 経営管理ダッシュボード</p>
+        <p class="text-muted" style="font-size: 11pt; margin-top: 20px; font-family: 'DM Mono', monospace;">デジタル化・AI導入補助金 2026 対応版 | カテゴリー1 ソフトウェア</p>
+      </section>
+
+      <!-- ====== 2. 目次 ====== -->
+      <section id="toc">
+        <h2><i class="fa-solid fa-list" style="color: var(--primary-color); margin-right: 10px; font-size: 24pt;"></i>目次</h2>
+        <div class="content">
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+            <div class="box" style="padding: 14px 18px;">
+              <p style="font-size: 11pt; color: var(--primary-color); font-family: 'DM Mono', monospace; font-weight: 600; margin-bottom: 2px;">01</p>
+              <p style="font-size: 14pt; font-weight: 600; margin: 0;">製品概要</p>
+            </div>
+            <div class="box" style="padding: 14px 18px;">
+              <p style="font-size: 11pt; color: var(--primary-color); font-family: 'DM Mono', monospace; font-weight: 600; margin-bottom: 2px;">02</p>
+              <p style="font-size: 14pt; font-weight: 600; margin: 0;">対応業務プロセス（5プロセス）</p>
+            </div>
+            <div class="box" style="padding: 14px 18px;">
+              <p style="font-size: 11pt; color: var(--primary-color); font-family: 'DM Mono', monospace; font-weight: 600; margin-bottom: 2px;">03-09</p>
+              <p style="font-size: 14pt; font-weight: 600; margin: 0;">各画面の操作説明</p>
+              <p style="font-size: 11pt; color: var(--muted-color); margin: 2px 0 0;">ダッシュボード / 取引先 / 債権 / 請求書 / 在庫 / 会計 / 給与</p>
+            </div>
+            <div class="box" style="padding: 14px 18px;">
+              <p style="font-size: 11pt; color: var(--primary-color); font-family: 'DM Mono', monospace; font-weight: 600; margin-bottom: 2px;">10-11</p>
+              <p style="font-size: 14pt; font-weight: 600; margin: 0;">インボイス制度対応詳細</p>
+              <p style="font-size: 11pt; color: var(--muted-color); margin: 2px 0 0;">仕分け / 仕訳帳 / 試算表</p>
+            </div>
+            <div class="box" style="padding: 14px 18px;">
+              <p style="font-size: 11pt; color: var(--primary-color); font-family: 'DM Mono', monospace; font-weight: 600; margin-bottom: 2px;">12-13</p>
+              <p style="font-size: 14pt; font-weight: 600; margin: 0;">インボイス要件適合 / 技術仕様</p>
+            </div>
+            <div class="box" style="padding: 14px 18px;">
+              <p style="font-size: 11pt; color: var(--primary-color); font-family: 'DM Mono', monospace; font-weight: 600; margin-bottom: 2px;">14-16</p>
+              <p style="font-size: 14pt; font-weight: 600; margin: 0;">補助金適合性 / 導入フロー / サポート</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ====== 3. 製品概要 ====== -->
+      <section id="overview">
+        <h2><i class="fa-solid fa-cube" style="color: var(--primary-color); margin-right: 10px; font-size: 24pt;"></i>製品概要</h2>
+        <div class="content">
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+            <div>
+              <div class="box-accent" style="margin-bottom: 14px;">
+                <p style="font-size: 12pt; color: var(--primary-color); font-weight: 600; margin-bottom: 6px;"><i class="fa-solid fa-tag"></i> 製品名</p>
+                <p style="font-size: 20pt; font-weight: 600; margin: 0;">BizFlow v1.0</p>
+                <p style="font-size: 12pt; color: var(--muted-color); margin: 4px 0 0;">経営管理ダッシュボード</p>
+              </div>
+              <div class="box" style="margin-bottom: 14px;">
+                <p style="font-size: 12pt; font-weight: 600; margin-bottom: 8px;"><i class="fa-solid fa-cloud" style="color: var(--primary-color);"></i> 提供形態</p>
+                <ul style="margin: 0;">
+                  <li style="font-size: 13pt;">クラウド型 SaaS</li>
+                  <li style="font-size: 13pt;">Webブラウザからアクセス</li>
+                  <li style="font-size: 13pt;">インストール不要</li>
+                </ul>
+              </div>
+            </div>
+            <div>
+              <div class="box" style="margin-bottom: 14px;">
+                <p style="font-size: 12pt; font-weight: 600; margin-bottom: 8px;"><i class="fa-solid fa-bullseye" style="color: var(--primary-color);"></i> 対象ユーザー</p>
+                <ul style="margin: 0;">
+                  <li style="font-size: 13pt;">中小企業・小規模事業者</li>
+                  <li style="font-size: 13pt;">全業種対応（共通プロセス）</li>
+                  <li style="font-size: 13pt;">経理・総務・経営管理部門</li>
+                </ul>
+              </div>
+              <div class="callout callout-green" style="padding: 14px 16px;">
+                <p style="font-size: 12pt; font-weight: 600; color: var(--success); margin-bottom: 4px;"><i class="fa-solid fa-file-invoice"></i> インボイス制度</p>
+                <p style="font-size: 13pt; margin: 0;">適格請求書等保存方式に完全対応。<br><strong>「会計」</strong>機能 + <strong>「受発注」</strong>機能を搭載。</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="footnote">大分類 I ソフトウェア / カテゴリー1（ソフトウェア）</div>
+      </section>
+
+      <!-- ====== 4. 対応業務プロセス ====== -->
+      <section id="processes">
+        <h2><i class="fa-solid fa-diagram-project" style="color: var(--primary-color); margin-right: 10px; font-size: 24pt;"></i>対応業務プロセス</h2>
+        <div class="content">
+          <p class="text-muted" style="font-size: 12pt; margin-bottom: 12px;">IT導入補助金2026 業務プロセス（別紙2）に基づく5つの共通プロセスに対応</p>
+          <table>
+            <thead>
+              <tr><th style="width: 100px;">Pコード</th><th style="width: 220px;">プロセス名</th><th>BizFlow該当機能</th><th style="width: 80px;">判定</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td style="font-family: 'DM Mono', monospace; font-weight: 600; color: var(--primary-color);">共P-01</td>
+                <td><strong>顧客対応・販売支援</strong></td>
+                <td>取引先管理 / T番号管理 / 適格・免税事業者分類</td>
+                <td><span class="badge badge-ok"><i class="fa-solid fa-check"></i> 適合</span></td>
+              </tr>
+              <tr>
+                <td style="font-family: 'DM Mono', monospace; font-weight: 600; color: var(--primary-color);">共P-02</td>
+                <td><strong>決済・債権債務・資金回収</strong></td>
+                <td>債権管理 / 請求書・見積書作成 / 入金管理</td>
+                <td><span class="badge badge-ok"><i class="fa-solid fa-check"></i> 適合</span></td>
+              </tr>
+              <tr>
+                <td style="font-family: 'DM Mono', monospace; font-weight: 600; color: var(--primary-color);">共P-03</td>
+                <td><strong>供給・在庫・物流</strong></td>
+                <td>在庫管理 / 在庫アラート / カテゴリ別在庫分析</td>
+                <td><span class="badge badge-ok"><i class="fa-solid fa-check"></i> 適合</span></td>
+              </tr>
+              <tr>
+                <td style="font-family: 'DM Mono', monospace; font-weight: 600; color: var(--primary-color);">共P-04</td>
+                <td><strong>会計・財務・経営</strong></td>
+                <td>仕訳帳 / 試算表 / インボイス仕分け / 入金概要</td>
+                <td><span class="badge badge-ok"><i class="fa-solid fa-check"></i> 適合</span></td>
+              </tr>
+              <tr>
+                <td style="font-family: 'DM Mono', monospace; font-weight: 600; color: var(--primary-color);">共P-05</td>
+                <td><strong>総務・人事・給与</strong></td>
+                <td>給与明細 / 社会保険料計算 / 手取り推移分析</td>
+                <td><span class="badge badge-ok"><i class="fa-solid fa-check"></i> 適合</span></td>
+              </tr>
+            </tbody>
+          </table>
+          <div class="callout" style="margin-top: 10px;">
+            <p style="font-size: 13pt; margin: 0;"><strong>通常枠（150万〜450万）の要件: </strong>業務プロセス4種類以上 &rarr; <strong>5プロセス対応で充足</strong></p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ====== 5. ダッシュボード ====== -->
+      <section id="dashboard">
+        <h2><i class="fa-solid fa-gauge-high" style="color: var(--primary-color); margin-right: 10px; font-size: 24pt;"></i>ダッシュボード</h2>
+        <div class="content">
+          <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-bottom: 16px;">
+            <div class="metric-card">
+              <div class="metric-value">23.8M</div>
+              <div class="metric-label">累計入金</div>
+              <p style="font-size: 10pt; color: var(--success); margin: 4px 0 0;"><i class="fa-solid fa-arrow-up"></i> +16% 前月比</p>
+            </div>
+            <div class="metric-card">
+              <div class="metric-value" style="color: var(--warning);">10.6M</div>
+              <div class="metric-label">未回収額</div>
+              <p style="font-size: 10pt; color: var(--muted-color); margin: 4px 0 0;">4件の未回収</p>
+            </div>
+            <div class="metric-card">
+              <div class="metric-value" style="color: var(--error);">2品目</div>
+              <div class="metric-label">在庫アラート</div>
+              <p style="font-size: 10pt; color: var(--muted-color); margin: 4px 0 0;">要補充</p>
+            </div>
+          </div>
+          <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 14px;">
+            <div class="box">
+              <p style="font-size: 11pt; font-weight: 600; color: var(--muted-color); font-family: 'DM Mono', monospace; margin-bottom: 6px;">主要表示項目</p>
+              <ul style="margin: 0;">
+                <li style="font-size: 13pt;"><strong>入金推移チャート</strong> &mdash; 累積入金額のエリアチャート</li>
+                <li style="font-size: 13pt;"><strong>債権ステータス</strong> &mdash; 入金済 / 未回収 / 延滞の内訳</li>
+                <li style="font-size: 13pt;"><strong>在庫アラート</strong> &mdash; 残少・在庫切れ品目の即時把握</li>
+              </ul>
+            </div>
+            <div class="callout callout-green">
+              <p style="font-size: 12pt; font-weight: 600; color: var(--success); margin-bottom: 6px;"><i class="fa-solid fa-file-invoice"></i> インボイス対応状況</p>
+              <p style="font-size: 13pt; margin: 0;">適格事業者数と免税事業者数をリアルタイム表示。T番号未登録の取引を警告。</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ====== 6. 取引先管理 ====== -->
+      <section id="clients">
+        <div class="process-tag">共P-01 顧客対応・販売支援</div>
+        <h2>取引先管理</h2>
+        <div class="content">
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 18px;">
+            <div>
+              <h3 style="font-size: 16pt; margin-bottom: 10px;"><i class="fa-solid fa-building" style="color: var(--primary-color);"></i> 企業情報カード</h3>
+              <ul>
+                <li style="font-size: 13pt;">企業名・略称・業種・担当者</li>
+                <li style="font-size: 13pt;">取引額の表示</li>
+                <li style="font-size: 13pt;">ステータス管理（取引中 / 停止）</li>
+              </ul>
+              <h3 style="font-size: 16pt; margin-top: 14px; margin-bottom: 10px;"><i class="fa-solid fa-magnifying-glass" style="color: var(--primary-color);"></i> 検索・フィルタ</h3>
+              <ul>
+                <li style="font-size: 13pt;">企業名・担当者名で全文検索</li>
+                <li style="font-size: 13pt;">適格事業者 / 免税事業者でフィルタ</li>
+                <li style="font-size: 13pt;">取引額・企業名でソート（昇順/降順）</li>
+              </ul>
+            </div>
+            <div>
+              <h3 style="font-size: 16pt; margin-bottom: 10px;"><i class="fa-solid fa-shield-halved" style="color: var(--primary-color);"></i> インボイス制度対応</h3>
+              <div class="box" style="padding: 14px;">
+                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+                  <span class="badge badge-ok"><i class="fa-solid fa-shield"></i> 適格事業者</span>
+                  <span style="font-size: 12pt; font-family: 'DM Mono', monospace; color: var(--muted-color);">T1234567890123</span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 10px;">
+                  <span class="badge badge-err"><i class="fa-solid fa-shield"></i> 免税事業者</span>
+                  <span style="font-size: 12pt; color: var(--error); font-style: italic;">T番号未登録</span>
+                </div>
+              </div>
+              <p style="font-size: 13pt; color: var(--muted-color); margin-top: 10px;">各取引先にT番号（適格請求書発行事業者登録番号）を登録。適格/免税の視覚的分類により、インボイス制度の管理が容易。</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ====== 7. 債権管理 ====== -->
+      <section id="receivables">
+        <div class="process-tag">共P-02 決済・債権債務・資金回収</div>
+        <h2>債権管理</h2>
+        <div class="content">
+          <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-bottom: 16px;">
+            <div class="metric-card">
+              <div class="metric-value">10.6M</div>
+              <div class="metric-label">未回収合計</div>
+            </div>
+            <div class="metric-card">
+              <div class="metric-value" style="color: var(--warning);">3件</div>
+              <div class="metric-label">未回収件数</div>
+            </div>
+            <div class="metric-card">
+              <div class="metric-value" style="color: var(--error);">1件</div>
+              <div class="metric-label">延滞</div>
+            </div>
+          </div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 18px;">
+            <div>
+              <h3 style="font-size: 16pt; margin-bottom: 10px;">ステータス管理</h3>
+              <div style="display: flex; flex-direction: column; gap: 8px;">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                  <span class="badge badge-ok" style="width: 70px; text-align: center;">入金済</span>
+                  <span style="font-size: 13pt;">回収完了した債権</span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 10px;">
+                  <span class="badge badge-warn" style="width: 70px; text-align: center;">未回収</span>
+                  <span style="font-size: 13pt;">期日前の未回収債権</span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 10px;">
+                  <span class="badge badge-err" style="width: 70px; text-align: center;">延滞</span>
+                  <span style="font-size: 13pt;">期日超過の要対応債権</span>
+                </div>
+              </div>
+            </div>
+            <div>
+              <h3 style="font-size: 16pt; margin-bottom: 10px;">表示情報</h3>
+              <ul>
+                <li style="font-size: 13pt;">取引先名・請求書番号</li>
+                <li style="font-size: 13pt;">支払期日・金額</li>
+                <li style="font-size: 13pt;">適格/免税バッジ + T番号</li>
+                <li style="font-size: 13pt;">ステータス別フィルタ機能</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ====== 8. 請求書/見積書作成 ====== -->
+      <section id="invoice">
+        <div class="process-tag">共P-02 決済・債権債務・資金回収</div>
+        <h2>請求書 / 見積書作成</h2>
+        <div class="content">
+          <div style="display: grid; grid-template-columns: 1.3fr 1fr; gap: 18px;">
+            <div>
+              <h3 style="font-size: 16pt; margin-bottom: 10px;"><i class="fa-solid fa-file-invoice-dollar" style="color: var(--primary-color);"></i> 適格請求書作成機能</h3>
+              <ul>
+                <li style="font-size: 13pt;">請求書 / 見積書のワンクリック切替</li>
+                <li style="font-size: 13pt;">取引先選択で<strong>T番号自動付与</strong></li>
+                <li style="font-size: 13pt;">品目ごとの<strong>8% / 10% 軽減税率切替</strong></li>
+                <li style="font-size: 13pt;">税率別消費税の個別計算・表示</li>
+                <li style="font-size: 13pt;">品目の追加・削除・単価編集</li>
+                <li style="font-size: 13pt;">適格請求書フォーマットのプレビュー</li>
+              </ul>
+              <div class="callout callout-orange" style="margin-top: 10px;">
+                <p style="font-size: 12pt; margin: 0;"><i class="fa-solid fa-triangle-exclamation"></i> 免税事業者を選択すると「T番号未登録 - 仕入税額控除対象外」の警告を表示</p>
+              </div>
+            </div>
+            <div>
+              <h3 style="font-size: 16pt; margin-bottom: 10px;"><i class="fa-solid fa-building-columns" style="color: var(--primary-color);"></i> 発行者情報</h3>
+              <div class="box" style="padding: 14px;">
+                <p style="font-size: 12pt; font-weight: 600; margin-bottom: 4px;">自社情報の自動表示</p>
+                <p style="font-size: 12pt; color: var(--muted-color); margin: 0;">企業名 / 住所 / 電話番号</p>
+              </div>
+              <div class="box-accent" style="padding: 14px; margin-top: 10px;">
+                <p style="font-size: 11pt; color: var(--primary-color); font-weight: 600; margin-bottom: 4px;">適格請求書発行事業者番号</p>
+                <p style="font-size: 14pt; font-weight: 600; font-family: 'DM Mono', monospace; margin: 0;">T2011001050463</p>
+                <p style="font-size: 10pt; color: var(--muted-color); margin: 4px 0 0;">請求書に自動付与されます</p>
+              </div>
+              <h3 style="font-size: 16pt; margin-top: 14px; margin-bottom: 8px;">税率ガイド</h3>
+              <div style="display: flex; gap: 8px;">
+                <span class="badge badge-primary"><strong>10%</strong> 標準税率</span>
+                <span class="badge badge-info"><strong>8%</strong> 軽減税率</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ====== 9. 在庫管理 ====== -->
+      <section id="inventory">
+        <div class="process-tag">共P-03 供給・在庫・物流</div>
+        <h2>在庫管理</h2>
+        <div class="content">
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 18px;">
+            <div>
+              <h3 style="font-size: 16pt; margin-bottom: 10px;"><i class="fa-solid fa-boxes-stacked" style="color: var(--primary-color);"></i> 商品カード表示</h3>
+              <ul>
+                <li style="font-size: 13pt;">商品ID・商品名・カテゴリ</li>
+                <li style="font-size: 13pt;">単価・在庫数のビジュアル表示</li>
+                <li style="font-size: 13pt;">在庫トレンドのミニバーチャート</li>
+              </ul>
+              <h3 style="font-size: 16pt; margin-top: 14px; margin-bottom: 10px;"><i class="fa-solid fa-filter" style="color: var(--primary-color);"></i> カテゴリフィルタ</h3>
+              <p style="font-size: 13pt;">All / SW / HW / 家具 / 周辺 で商品を分類表示</p>
+            </div>
+            <div>
+              <h3 style="font-size: 16pt; margin-bottom: 10px;"><i class="fa-solid fa-traffic-light" style="color: var(--primary-color);"></i> 在庫ステータス</h3>
+              <div style="display: flex; flex-direction: column; gap: 10px;">
+                <div class="box" style="padding: 12px 16px; display: flex; align-items: center; gap: 12px; border-left: 4px solid var(--success);">
+                  <span class="badge badge-ok">在庫あり</span>
+                  <span style="font-size: 13pt;">十分な在庫がある状態</span>
+                </div>
+                <div class="box" style="padding: 12px 16px; display: flex; align-items: center; gap: 12px; border-left: 4px solid var(--warning);">
+                  <span class="badge badge-warn">残少</span>
+                  <span style="font-size: 13pt;">在庫が少なく補充が必要</span>
+                </div>
+                <div class="box" style="padding: 12px 16px; display: flex; align-items: center; gap: 12px; border-left: 4px solid var(--error);">
+                  <span class="badge badge-err">在庫切れ</span>
+                  <span style="font-size: 13pt;">在庫ゼロ / 緊急補充</span>
+                </div>
+              </div>
+              <p style="font-size: 12pt; color: var(--muted-color); margin-top: 10px;">ダッシュボードの在庫アラートで残少・在庫切れ品目を即時把握</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ====== 10. 会計・入金管理 ====== -->
+      <section id="accounting">
+        <div class="process-tag">共P-04 会計・財務・経営</div>
+        <h2>会計・入金管理</h2>
+        <div class="content">
+          <p style="font-size: 14pt; color: var(--muted-color); margin-bottom: 14px;">4つのサブビューで会計・財務業務を包括的に管理</p>
+          <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px;">
+            <div class="box" style="border-left: 4px solid var(--primary-color);">
+              <p style="font-size: 14pt; font-weight: 600; margin-bottom: 6px;"><i class="fa-solid fa-chart-area" style="color: var(--primary-color);"></i> 入金概要</p>
+              <ul style="margin: 0;">
+                <li style="font-size: 12pt;">累積入金額のエリアチャート</li>
+                <li style="font-size: 12pt;">月別入金のバーチャート</li>
+                <li style="font-size: 12pt;">累計入金・今月入金メトリクス</li>
+              </ul>
+            </div>
+            <div class="box" style="border-left: 4px solid var(--success);">
+              <p style="font-size: 14pt; font-weight: 600; margin-bottom: 6px;"><i class="fa-solid fa-shield-halved" style="color: var(--success);"></i> インボイス仕分け</p>
+              <ul style="margin: 0;">
+                <li style="font-size: 12pt;">適格/免税事業者の取引自動仕分け</li>
+                <li style="font-size: 12pt;">仕入税額控除の可否判定</li>
+                <li style="font-size: 12pt;">控除可能消費税額の算出</li>
+              </ul>
+            </div>
+            <div class="box" style="border-left: 4px solid var(--blue);">
+              <p style="font-size: 14pt; font-weight: 600; margin-bottom: 6px;"><i class="fa-solid fa-book" style="color: var(--blue);"></i> 仕訳帳</p>
+              <ul style="margin: 0;">
+                <li style="font-size: 12pt;">複式簿記による仕訳入力</li>
+                <li style="font-size: 12pt;">勘定科目マスタ（18科目）</li>
+                <li style="font-size: 12pt;">伝票番号の自動採番</li>
+              </ul>
+            </div>
+            <div class="box" style="border-left: 4px solid var(--warning);">
+              <p style="font-size: 14pt; font-weight: 600; margin-bottom: 6px;"><i class="fa-solid fa-scale-balanced" style="color: var(--warning);"></i> 試算表</p>
+              <ul style="margin: 0;">
+                <li style="font-size: 12pt;">残高試算表（カテゴリ別集計）</li>
+                <li style="font-size: 12pt;">借方・貸方・残高の表示</li>
+                <li style="font-size: 12pt;">貸借一致の自動検証</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ====== 11. インボイス仕分け詳細 ====== -->
+      <section id="invoice-sort">
+        <h2><i class="fa-solid fa-shield-halved" style="color: var(--primary-color); margin-right: 10px; font-size: 24pt;"></i>インボイス仕分け</h2>
+        <div class="content">
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-bottom: 14px;">
+            <div class="box" style="border-top: 4px solid var(--success);">
+              <p style="font-size: 14pt; font-weight: 600; color: var(--success); margin-bottom: 8px;"><i class="fa-solid fa-shield"></i> 適格請求書発行事業者</p>
+              <ul>
+                <li style="font-size: 13pt;">T番号登録済の取引先</li>
+                <li style="font-size: 13pt;">仕入税額控除 <strong>可</strong></li>
+                <li style="font-size: 13pt;">取引先名 / T番号 / 請求書番号 / 金額を表示</li>
+              </ul>
+            </div>
+            <div class="box" style="border-top: 4px solid var(--error);">
+              <p style="font-size: 14pt; font-weight: 600; color: var(--error); margin-bottom: 8px;"><i class="fa-solid fa-shield"></i> 免税事業者</p>
+              <ul>
+                <li style="font-size: 13pt;">T番号未登録の取引先</li>
+                <li style="font-size: 13pt;">仕入税額控除 <strong>不可</strong></li>
+                <li style="font-size: 13pt;">経過措置期間中の控除割合に関する注意喚起</li>
+              </ul>
+            </div>
+          </div>
+          <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px;">
+            <div class="metric-card" style="border-top: 3px solid var(--success);">
+              <div class="metric-label">適格請求書 取引額</div>
+              <div class="metric-value" style="color: var(--success); font-size: 22pt;">自動集計</div>
+              <p style="font-size: 10pt; color: var(--success); margin: 2px 0 0;">税額控除可</p>
+            </div>
+            <div class="metric-card" style="border-top: 3px solid var(--error);">
+              <div class="metric-label">免税事業者 取引額</div>
+              <div class="metric-value" style="color: var(--error); font-size: 22pt;">自動集計</div>
+              <p style="font-size: 10pt; color: var(--error); margin: 2px 0 0;">税額控除不可</p>
+            </div>
+            <div class="metric-card" style="border-top: 3px solid var(--primary-color);">
+              <div class="metric-label">控除可能 消費税額</div>
+              <div class="metric-value" style="font-size: 22pt;">自動算出</div>
+              <p style="font-size: 10pt; color: var(--muted-color); margin: 2px 0 0;">適格取引の10%</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ====== 12. 仕訳帳・試算表 ====== -->
+      <section id="journal-trial">
+        <h2><i class="fa-solid fa-book-open" style="color: var(--primary-color); margin-right: 10px; font-size: 24pt;"></i>仕訳帳・試算表</h2>
+        <div class="content">
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 18px;">
+            <div>
+              <h3 style="font-size: 16pt; margin-bottom: 10px;">仕訳帳（複式簿記）</h3>
+              <p style="font-size: 13pt; margin-bottom: 8px;">仕訳入力フォームから日付・借方科目・貸方科目・金額・摘要を入力して登録。</p>
+              <table style="font-size: 11pt;">
+                <thead>
+                  <tr><th>カテゴリ</th><th>科目数</th><th>例</th></tr>
+                </thead>
+                <tbody>
+                  <tr><td>資産</td><td>4科目</td><td>現金 / 普通預金 / 売掛金 / 商品</td></tr>
+                  <tr><td>負債</td><td>3科目</td><td>買掛金 / 未払金 / 預り金</td></tr>
+                  <tr><td>純資産</td><td>1科目</td><td>資本金</td></tr>
+                  <tr><td>収益</td><td>2科目</td><td>売上高 / 受取利息</td></tr>
+                  <tr><td>費用</td><td>8科目</td><td>仕入高 / 給与手当 / 法定福利費 等</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <div>
+              <h3 style="font-size: 16pt; margin-bottom: 10px;">残高試算表</h3>
+              <ul>
+                <li style="font-size: 13pt;">勘定科目別の借方合計・貸方合計・残高</li>
+                <li style="font-size: 13pt;">カテゴリ別小計（資産/負債/純資産/収益/費用）</li>
+                <li style="font-size: 13pt;">色分けによるカテゴリ識別</li>
+              </ul>
+              <div class="callout callout-green" style="margin-top: 12px;">
+                <p style="font-size: 13pt; font-weight: 600; color: var(--success); margin-bottom: 4px;"><i class="fa-solid fa-check-circle"></i> 貸借一致検証</p>
+                <p style="font-size: 12pt; margin: 0;">借方合計と貸方合計が一致しているかを自動検証。一致時は「貸借一致」バッジを表示。</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ====== 13. 給与明細 ====== -->
+      <section id="payroll">
+        <div class="process-tag">共P-05 総務・人事・給与</div>
+        <h2>給与明細</h2>
+        <div class="content">
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 18px;">
+            <div>
+              <h3 style="font-size: 16pt; margin-bottom: 10px;"><i class="fa-solid fa-user" style="color: var(--primary-color);"></i> 従業員情報</h3>
+              <div class="box" style="padding: 14px;">
+                <p style="font-size: 13pt; margin: 0;">氏名 / 所属部署・役職 / 社員番号の表示</p>
+                <p style="font-size: 13pt; margin: 6px 0 0;">当月の手取り額を大きく表示</p>
+              </div>
+              <h3 style="font-size: 16pt; margin-top: 14px; margin-bottom: 10px;"><i class="fa-solid fa-chart-bar" style="color: var(--primary-color);"></i> 手取り推移チャート</h3>
+              <p style="font-size: 13pt;">過去6ヶ月分の手取り額をバーチャートで可視化。直近月をアクセントカラーでハイライト。</p>
+            </div>
+            <div>
+              <h3 style="font-size: 16pt; margin-bottom: 10px;">明細内訳</h3>
+              <div class="box" style="padding: 14px; border-left: 4px solid var(--success); margin-bottom: 10px;">
+                <p style="font-size: 12pt; font-weight: 600; color: var(--success); margin-bottom: 4px;">INCOME（支給）</p>
+                <p style="font-size: 12pt; color: var(--muted-color); margin: 0;">基本給 / 残業手当 / 通勤手当</p>
+              </div>
+              <div class="box" style="padding: 14px; border-left: 4px solid var(--error); margin-bottom: 10px;">
+                <p style="font-size: 12pt; font-weight: 600; color: var(--error); margin-bottom: 4px;">DEDUCTION（控除）</p>
+                <p style="font-size: 12pt; color: var(--muted-color); margin: 0;">健康保険 / 厚生年金 / 所得税 / 住民税</p>
+              </div>
+              <div class="box-accent" style="padding: 14px;">
+                <p style="font-size: 12pt; margin: 0;"><strong>支給合計</strong> - <strong>控除合計</strong> = <strong style="color: var(--primary-color);">手取り額</strong></p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ====== 14. インボイス制度対応まとめ ====== -->
+      <section id="invoice-compliance">
+        <h2><i class="fa-solid fa-file-contract" style="color: var(--primary-color); margin-right: 10px; font-size: 24pt;"></i>インボイス制度 適合要件</h2>
+        <div class="content">
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 18px;">
+            <div>
+              <h3 style="font-size: 16pt; margin-bottom: 10px; color: var(--blue);"><i class="fa-solid fa-calculator"></i> 「会計」機能 要件（4項目）</h3>
+              <table style="font-size: 12pt;">
+                <thead><tr><th>#</th><th>必要事項</th><th>判定</th></tr></thead>
+                <tbody>
+                  <tr><td>1</td><td>課税仕入れの相手方の氏名又は名称</td><td><span class="badge badge-ok">適合</span></td></tr>
+                  <tr><td>2</td><td>取引年月日</td><td><span class="badge badge-ok">適合</span></td></tr>
+                  <tr><td>3</td><td>取引内容（軽減税率対象の記載）</td><td><span class="badge badge-ok">適合</span></td></tr>
+                  <tr><td>4</td><td>対価の額</td><td><span class="badge badge-ok">適合</span></td></tr>
+                </tbody>
+              </table>
+            </div>
+            <div>
+              <h3 style="font-size: 16pt; margin-bottom: 10px; color: var(--success);"><i class="fa-solid fa-file-invoice"></i> 「受発注」機能 要件（6項目）</h3>
+              <table style="font-size: 12pt;">
+                <thead><tr><th>#</th><th>必要事項</th><th>判定</th></tr></thead>
+                <tbody>
+                  <tr><td>1</td><td>発行事業者の氏名・登録番号</td><td><span class="badge badge-ok">適合</span></td></tr>
+                  <tr><td>2</td><td>取引年月日</td><td><span class="badge badge-ok">適合</span></td></tr>
+                  <tr><td>3</td><td>取引内容（軽減税率対象の記載）</td><td><span class="badge badge-ok">適合</span></td></tr>
+                  <tr><td>4</td><td>税率ごとの合計額・適用税率</td><td><span class="badge badge-ok">適合</span></td></tr>
+                  <tr><td>5</td><td>消費税額等</td><td><span class="badge badge-ok">適合</span></td></tr>
+                  <tr><td>6</td><td>交付を受ける事業者の氏名</td><td><span class="badge badge-ok">適合</span></td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+        <div class="footnote">ITツール登録要領 2-3(1)3. インボイス制度への対応状況に関する留意事項 に基づく</div>
+      </section>
+
+      <!-- ====== 15. 技術仕様 ====== -->
+      <section id="tech-spec">
+        <h2><i class="fa-solid fa-microchip" style="color: var(--primary-color); margin-right: 10px; font-size: 24pt;"></i>技術仕様</h2>
+        <div class="content">
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 18px;">
+            <div>
+              <h3 style="font-size: 16pt; margin-bottom: 10px;">フロントエンド</h3>
+              <table style="font-size: 12pt;">
+                <tbody>
+                  <tr><td style="font-weight: 600; width: 140px;">フレームワーク</td><td>React 18.3</td></tr>
+                  <tr><td style="font-weight: 600;">ビルドツール</td><td>Vite 6</td></tr>
+                  <tr><td style="font-weight: 600;">チャート</td><td>Recharts 2.13</td></tr>
+                  <tr><td style="font-weight: 600;">アイコン</td><td>Lucide React</td></tr>
+                  <tr><td style="font-weight: 600;">対応ブラウザ</td><td>Chrome / Safari / Edge / Firefox</td></tr>
+                </tbody>
+              </table>
+              <h3 style="font-size: 16pt; margin-top: 14px; margin-bottom: 10px;">バックエンド</h3>
+              <table style="font-size: 12pt;">
+                <tbody>
+                  <tr><td style="font-weight: 600; width: 140px;">BaaS</td><td>Supabase</td></tr>
+                  <tr><td style="font-weight: 600;">データベース</td><td>PostgreSQL</td></tr>
+                  <tr><td style="font-weight: 600;">API</td><td>REST API（自動生成）</td></tr>
+                  <tr><td style="font-weight: 600;">セキュリティ</td><td>Row Level Security (RLS)</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <div>
+              <h3 style="font-size: 16pt; margin-bottom: 10px;">データベース構成</h3>
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px;">
+                <div class="box" style="padding: 8px 12px;"><p style="font-size: 11pt; margin: 0;"><strong>clients</strong><br><span style="color: var(--muted-color);">取引先</span></p></div>
+                <div class="box" style="padding: 8px 12px;"><p style="font-size: 11pt; margin: 0;"><strong>receivables</strong><br><span style="color: var(--muted-color);">債権</span></p></div>
+                <div class="box" style="padding: 8px 12px;"><p style="font-size: 11pt; margin: 0;"><strong>products</strong><br><span style="color: var(--muted-color);">商品/在庫</span></p></div>
+                <div class="box" style="padding: 8px 12px;"><p style="font-size: 11pt; margin: 0;"><strong>deposits</strong><br><span style="color: var(--muted-color);">入金推移</span></p></div>
+                <div class="box" style="padding: 8px 12px;"><p style="font-size: 11pt; margin: 0;"><strong>accounts</strong><br><span style="color: var(--muted-color);">勘定科目</span></p></div>
+                <div class="box" style="padding: 8px 12px;"><p style="font-size: 11pt; margin: 0;"><strong>journal_entries</strong><br><span style="color: var(--muted-color);">仕訳帳</span></p></div>
+                <div class="box" style="padding: 8px 12px;"><p style="font-size: 11pt; margin: 0;"><strong>employees</strong><br><span style="color: var(--muted-color);">従業員</span></p></div>
+                <div class="box" style="padding: 8px 12px;"><p style="font-size: 11pt; margin: 0;"><strong>salary_items</strong><br><span style="color: var(--muted-color);">給与項目</span></p></div>
+                <div class="box" style="padding: 8px 12px;"><p style="font-size: 11pt; margin: 0;"><strong>invoice_tpl</strong><br><span style="color: var(--muted-color);">請求書テンプレ</span></p></div>
+                <div class="box" style="padding: 8px 12px;"><p style="font-size: 11pt; margin: 0;"><strong>company_profile</strong><br><span style="color: var(--muted-color);">自社情報</span></p></div>
+              </div>
+              <p style="font-size: 11pt; color: var(--muted-color); margin-top: 8px;">+ salary_history / receivables_with_client (VIEW)</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ====== 16. IT導入補助金適合性 ====== -->
+      <section id="subsidy-compliance">
+        <h2><i class="fa-solid fa-award" style="color: var(--primary-color); margin-right: 10px; font-size: 24pt;"></i>IT導入補助金2026 適合性</h2>
+        <div class="content">
+          <h3 style="font-size: 16pt; margin-bottom: 10px;">審査着目点（4-1(1)）全7項目</h3>
+          <table>
+            <thead><tr><th style="width: 40px;">#</th><th>審査項目</th><th style="width: 80px;">判定</th></tr></thead>
+            <tbody>
+              <tr><td>1</td><td>労働生産性の向上に寄与するITツールであるか</td><td><span class="badge badge-ok"><i class="fa-solid fa-check"></i> 適合</span></td></tr>
+              <tr><td>2</td><td>導入対象業種の選択が妥当であるか</td><td><span class="badge badge-ok"><i class="fa-solid fa-check"></i> 適合</span></td></tr>
+              <tr><td>3</td><td>プロセスの選択が妥当であるか（5プロセス対応）</td><td><span class="badge badge-ok"><i class="fa-solid fa-check"></i> 適合</span></td></tr>
+              <tr><td>4</td><td>申請された価格が妥当であるか</td><td><span class="badge badge-info">要資料</span></td></tr>
+              <tr><td>5</td><td>対象外のITツールに該当しないか</td><td><span class="badge badge-ok"><i class="fa-solid fa-check"></i> 適合</span></td></tr>
+              <tr><td>6</td><td>複数ソフトウェア・オプション等と混在していないか</td><td><span class="badge badge-ok"><i class="fa-solid fa-check"></i> 適合</span></td></tr>
+              <tr><td>7</td><td>恒常的に使用されるITツールであるか</td><td><span class="badge badge-ok"><i class="fa-solid fa-check"></i> 適合</span></td></tr>
+            </tbody>
+          </table>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 12px;">
+            <div class="callout callout-green">
+              <p style="font-size: 13pt; margin: 0;"><strong>インボイス枠（インボイス対応類型）:</strong><br>「会計」+ 「受発注」の2機能で要件充足</p>
+            </div>
+            <div class="callout">
+              <p style="font-size: 13pt; margin: 0;"><strong>通常枠（150万〜450万）:</strong><br>5プロセス対応で4種類以上の要件充足</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ====== 17. 導入フロー ====== -->
+      <section id="flow">
+        <h2><i class="fa-solid fa-route" style="color: var(--primary-color); margin-right: 10px; font-size: 24pt;"></i>導入フロー</h2>
+        <div class="content">
+          <div style="display: flex; flex-direction: column; gap: 14px;">
+            <div class="flow-step">
+              <div class="step-num">1</div>
+              <div>
+                <p style="font-size: 15pt; font-weight: 600; margin: 0;">アカウント作成</p>
+                <p style="font-size: 13pt; color: var(--muted-color); margin: 4px 0 0;">BizFlowクラウドにアカウントを登録。ブラウザからすぐにアクセス可能。</p>
+              </div>
+            </div>
+            <div style="text-align: center; color: var(--primary-color);"><i class="fa-solid fa-arrow-down"></i></div>
+            <div class="flow-step">
+              <div class="step-num">2</div>
+              <div>
+                <p style="font-size: 15pt; font-weight: 600; margin: 0;">初期設定</p>
+                <p style="font-size: 13pt; color: var(--muted-color); margin: 4px 0 0;">自社情報（企業名 / T番号 / 住所 / 電話番号）を登録。請求書に自動反映。</p>
+              </div>
+            </div>
+            <div style="text-align: center; color: var(--primary-color);"><i class="fa-solid fa-arrow-down"></i></div>
+            <div class="flow-step">
+              <div class="step-num">3</div>
+              <div>
+                <p style="font-size: 15pt; font-weight: 600; margin: 0;">マスタデータ登録</p>
+                <p style="font-size: 13pt; color: var(--muted-color); margin: 4px 0 0;">取引先情報（T番号含む）/ 商品情報 / 従業員情報 / 勘定科目のマスタ登録。</p>
+              </div>
+            </div>
+            <div style="text-align: center; color: var(--primary-color);"><i class="fa-solid fa-arrow-down"></i></div>
+            <div class="flow-step" style="border: 1px solid rgba(13,148,136,0.3); background: var(--primary-soft);">
+              <div class="step-num">4</div>
+              <div>
+                <p style="font-size: 15pt; font-weight: 600; margin: 0; color: var(--primary-dim);">運用開始</p>
+                <p style="font-size: 13pt; color: var(--muted-color); margin: 4px 0 0;">仕訳入力 / 請求書発行 / 債権管理 / 在庫管理 / 給与管理 を日常業務で活用。</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ====== 18. サポート ====== -->
+      <section id="support" class="closing-slide">
+        <div style="margin-bottom: 20px;">
+          <div style="display: inline-flex; align-items: center; justify-content: center; width: 56px; height: 56px; border-radius: 16px; background: linear-gradient(135deg, #0D9488, #0F766E); color: white; font-size: 24pt; font-weight: 800; font-family: 'DM Mono', monospace; box-shadow: 0 6px 24px rgba(13,148,136,0.3);">B</div>
+        </div>
+        <h1 style="font-size: 36pt; color: var(--primary-dim);">BizFlow v1.0</h1>
+        <p class="text-xl" style="color: var(--muted-color); margin-top: 8px;">インボイス制度対応 経営管理ダッシュボード</p>
+        <div style="margin-top: 30px; display: flex; gap: 20px; justify-content: center;">
+          <div class="box" style="padding: 16px 24px; text-align: center;">
+            <p style="font-size: 11pt; color: var(--primary-color); font-weight: 600; margin-bottom: 4px;"><i class="fa-solid fa-headset"></i> サポート</p>
+            <p style="font-size: 13pt; margin: 0;">お問い合わせ窓口</p>
+          </div>
+          <div class="box" style="padding: 16px 24px; text-align: center;">
+            <p style="font-size: 11pt; color: var(--primary-color); font-weight: 600; margin-bottom: 4px;"><i class="fa-solid fa-book"></i> ドキュメント</p>
+            <p style="font-size: 13pt; margin: 0;">オンラインヘルプ</p>
+          </div>
+          <div class="box" style="padding: 16px 24px; text-align: center;">
+            <p style="font-size: 11pt; color: var(--primary-color); font-weight: 600; margin-bottom: 4px;"><i class="fa-solid fa-graduation-cap"></i> 研修</p>
+            <p style="font-size: 13pt; margin: 0;">導入トレーニング</p>
+          </div>
+        </div>
+        <p style="font-size: 11pt; color: var(--muted-color); margin-top: 24px; font-family: 'DM Mono', monospace;">デジタル化・AI導入補助金 2026 | カテゴリー1 ソフトウェア</p>
+      </section>
+
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/reveal.js-plugins@latest/chart/plugin.js"></script>
+  <script>
+    Reveal.initialize({
+      width: 1280,
+      height: 720,
+      margin: 0,
+      controls: true,
+      progress: true,
+      slideNumber: true,
+      hash: true,
+      transition: 'slide',
+      center: false,
+      plugins: [ RevealChart ],
+      chart: {
+        defaults: Object.assign({
+          color: 'rgba(0, 0, 0, 0.8)',
+          borderColor: 'rgba(0, 0, 0, 0.8)',
+          devicePixelRatio: 2
+        }, window.location.search.includes('export') ? { animation: false } : {})
+      }
+    });
+  </script>
+</body>
+</html>

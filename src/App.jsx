@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, BarChart, Bar, Cell, PieChart, Pie } from "recharts";
-import { Search, Plus, Building2, CreditCard, Package, TrendingUp, User, Bell, Settings, ArrowUpRight, ArrowDownRight, AlertCircle, CheckCircle2, Clock, LayoutDashboard, ChevronRight, ChevronDown, Filter, Eye, EyeOff, Zap, Boxes, Wallet, Receipt, UserCircle, Home, X, ArrowRight, Hash, FileText, Printer, ToggleLeft, ToggleRight, ShieldCheck, ShieldX, Percent, BadgeCheck, CircleSlash, Download, Copy, Trash2 } from "lucide-react";
+import { Search, Plus, Building2, CreditCard, Package, TrendingUp, User, Bell, Settings, ArrowUpRight, ArrowDownRight, AlertCircle, CheckCircle2, Clock, LayoutDashboard, ChevronRight, ChevronDown, Filter, Eye, EyeOff, Zap, Boxes, Wallet, Receipt, UserCircle, Home, X, ArrowRight, Hash, FileText, Printer, ToggleLeft, ToggleRight, ShieldCheck, ShieldX, Percent, BadgeCheck, CircleSlash, Download, Copy, Trash2, BookOpen, Scale, LogOut, Mail, Lock } from "lucide-react";
 import { supabase } from "./lib/supabase";
 
 /* ════════════════════════════════════════
@@ -38,6 +38,8 @@ const useSupabaseData = () => {
         { data: sHist },
         { data: tplItems },
         { data: cpRows },
+        { data: accts },
+        { data: jEntries },
       ] = await Promise.all([
         supabase.from('clients').select('*'),
         supabase.from('receivables_with_client').select('*'),
@@ -48,6 +50,8 @@ const useSupabaseData = () => {
         supabase.from('salary_history').select('*').order('sort_order'),
         supabase.from('invoice_template_items').select('*').order('sort_order'),
         supabase.from('company_profile').select('*').limit(1),
+        supabase.from('accounts').select('*').order('sort_order'),
+        supabase.from('journal_entries').select('*').order('entry_date', { ascending: false }),
       ]);
 
       const mappedClients = (clients || []).map(c => ({
@@ -86,6 +90,20 @@ const useSupabaseData = () => {
         tel: cp.tel || '',
       };
 
+      const mappedAccounts = (accts || []).map(a => ({
+        ...a,
+        sortOrder: a.sort_order,
+      }));
+
+      const mappedJournalEntries = (jEntries || []).map(j => ({
+        ...j,
+        entryDate: j.entry_date,
+        entryNo: j.entry_no,
+        debitAccountId: j.debit_account_id,
+        creditAccountId: j.credit_account_id,
+        createdAt: j.created_at,
+      }));
+
       setData({
         clients: mappedClients,
         receivables: mappedReceivables,
@@ -94,6 +112,8 @@ const useSupabaseData = () => {
         salary,
         invoiceTemplateItems,
         myCompany,
+        accounts: mappedAccounts,
+        journalEntries: mappedJournalEntries,
       });
       setLoading(false);
     };
@@ -518,8 +538,12 @@ const InventoryPage = ({ products }) => {
 /* ════════════════════════════════════════
    PAGE: ACCOUNTING (P4) — T番号仕分け + 税額控除
    ════════════════════════════════════════ */
-const AccountingPage = ({ receivables, deposits }) => {
+const AccountingPage = ({ receivables, deposits, accounts, journalEntries }) => {
   const [view, setView] = useState("overview");
+  const [jeForm, setJeForm] = useState({ date: '', debitId: '', creditId: '', amount: '', desc: '' });
+  const [localEntries, setLocalEntries] = useState(null);
+
+  const entries = localEntries || journalEntries;
 
   const regTx = receivables.filter(r => r.registered);
   const unregTx = receivables.filter(r => !r.registered);
@@ -530,12 +554,81 @@ const AccountingPage = ({ receivables, deposits }) => {
   const deductible = regTax;
   const nonDeductible = unregTax;
 
+  // 勘定科目をカテゴリ別にグルーピング
+  const categoryLabels = { asset: '資産', liability: '負債', equity: '純資産', revenue: '収益', expense: '費用' };
+  const categoryOrder = ['asset', 'liability', 'equity', 'revenue', 'expense'];
+  const accountsByCategory = categoryOrder.map(cat => ({
+    category: cat,
+    label: categoryLabels[cat],
+    items: (accounts || []).filter(a => a.category === cat),
+  }));
+
+  // 仕訳帳メトリクス
+  const now = new Date();
+  const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+  const monthEntries = entries.filter(e => e.entryDate && e.entryDate.startsWith(currentMonth));
+  const totalDebit = entries.reduce((s, e) => s + e.amount, 0);
+  const totalCredit = totalDebit; // 複式簿記のため借方合計 = 貸方合計
+
+  // 仕訳登録ハンドラ
+  const handleJeSubmit = async () => {
+    if (!jeForm.date || !jeForm.debitId || !jeForm.creditId || !jeForm.amount) return;
+    const nextNo = `JE-${now.getFullYear()}-${String(entries.length + 1).padStart(3, '0')}`;
+    const { data: inserted, error } = await supabase.from('journal_entries').insert({
+      entry_date: jeForm.date,
+      entry_no: nextNo,
+      description: jeForm.desc,
+      debit_account_id: Number(jeForm.debitId),
+      credit_account_id: Number(jeForm.creditId),
+      amount: Number(jeForm.amount),
+    }).select();
+    if (!error && inserted && inserted.length > 0) {
+      const newEntry = {
+        ...inserted[0],
+        entryDate: inserted[0].entry_date,
+        entryNo: inserted[0].entry_no,
+        debitAccountId: inserted[0].debit_account_id,
+        creditAccountId: inserted[0].credit_account_id,
+        createdAt: inserted[0].created_at,
+      };
+      setLocalEntries([newEntry, ...entries]);
+      setJeForm({ date: '', debitId: '', creditId: '', amount: '', desc: '' });
+    }
+  };
+
+  // 試算表計算
+  const trialBalance = (accounts || []).map(acct => {
+    const debitSum = entries.filter(e => e.debitAccountId === acct.id).reduce((s, e) => s + e.amount, 0);
+    const creditSum = entries.filter(e => e.creditAccountId === acct.id).reduce((s, e) => s + e.amount, 0);
+    const isDebitNormal = acct.category === 'asset' || acct.category === 'expense';
+    const balance = isDebitNormal ? debitSum - creditSum : creditSum - debitSum;
+    return { ...acct, debitSum, creditSum, balance };
+  }).filter(a => a.debitSum > 0 || a.creditSum > 0);
+
+  const getAccountName = (id) => {
+    const a = (accounts || []).find(a => a.id === id);
+    return a ? a.name : '';
+  };
+
+  // セレクトボックスの共通スタイル
+  const selectStyle = {
+    width: "100%", padding: "10px 14px", background: C.bgGlass, border: `1px solid ${C.border}`,
+    borderRadius: 10, color: C.text, fontSize: 12.5, fontFamily: "'Outfit', sans-serif",
+    outline: "none", cursor: "pointer", appearance: "none", boxSizing: "border-box",
+  };
+  const inputStyle = {
+    width: "100%", padding: "10px 14px", background: C.bgGlass, border: `1px solid ${C.border}`,
+    borderRadius: 10, color: C.text, fontSize: 12.5, fontFamily: "'Outfit', sans-serif",
+    outline: "none", boxSizing: "border-box",
+  };
+
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
       <SectionHeader process="P4 · 会計・財務・経営" title="入金管理" />
 
       <PillFilter active={view} onChange={setView} items={[
         { k: "overview", l: "入金概要" }, { k: "invoice-sort", l: "インボイス仕分け" },
+        { k: "journal", l: "仕訳帳" }, { k: "trial-balance", l: "試算表" },
       ]} />
 
       {view === "overview" && (<>
@@ -647,6 +740,186 @@ const AccountingPage = ({ receivables, deposits }) => {
             </div>
           </Glass>
         </div>
+      </>)}
+
+      {/* ★ 仕訳帳ビュー */}
+      {view === "journal" && (<>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12 }}>
+          <Metric icon={BookOpen} label="今月仕訳件数" value={`${monthEntries.length}件`} delay={0} />
+          <Metric icon={ArrowUpRight} label="借方合計" value={fmt(totalDebit)} delay={0.05} />
+          <Metric icon={ArrowDownRight} label="貸方合計" value={fmt(totalCredit)} delay={0.1} />
+        </div>
+
+        {/* 仕訳入力フォーム */}
+        <Glass delay={0.15} style={{ padding: "22px 26px" }}>
+          <div style={{ fontSize: 10, fontWeight: 600, color: C.textMuted, letterSpacing: "0.1em", fontFamily: "'DM Mono', monospace", marginBottom: 16 }}>仕訳入力</div>
+          <div style={{ display: "grid", gridTemplateColumns: "140px 1fr 1fr 140px 1fr auto", gap: 12, alignItems: "end" }}>
+            <div>
+              <div style={{ fontSize: 10, color: C.textMuted, marginBottom: 6, fontFamily: "'DM Mono', monospace" }}>日付</div>
+              <input type="date" value={jeForm.date} onChange={e => setJeForm(f => ({ ...f, date: e.target.value }))} style={inputStyle} />
+            </div>
+            <div>
+              <div style={{ fontSize: 10, color: C.textMuted, marginBottom: 6, fontFamily: "'DM Mono', monospace" }}>借方科目</div>
+              <select value={jeForm.debitId} onChange={e => setJeForm(f => ({ ...f, debitId: e.target.value }))} style={selectStyle}>
+                <option value="">選択...</option>
+                {accountsByCategory.map(g => (
+                  <optgroup key={g.category} label={g.label}>
+                    {g.items.map(a => <option key={a.id} value={a.id}>{a.code} {a.name}</option>)}
+                  </optgroup>
+                ))}
+              </select>
+            </div>
+            <div>
+              <div style={{ fontSize: 10, color: C.textMuted, marginBottom: 6, fontFamily: "'DM Mono', monospace" }}>貸方科目</div>
+              <select value={jeForm.creditId} onChange={e => setJeForm(f => ({ ...f, creditId: e.target.value }))} style={selectStyle}>
+                <option value="">選択...</option>
+                {accountsByCategory.map(g => (
+                  <optgroup key={g.category} label={g.label}>
+                    {g.items.map(a => <option key={a.id} value={a.id}>{a.code} {a.name}</option>)}
+                  </optgroup>
+                ))}
+              </select>
+            </div>
+            <div>
+              <div style={{ fontSize: 10, color: C.textMuted, marginBottom: 6, fontFamily: "'DM Mono', monospace" }}>金額</div>
+              <input type="number" value={jeForm.amount} onChange={e => setJeForm(f => ({ ...f, amount: e.target.value }))} placeholder="0" style={inputStyle} />
+            </div>
+            <div>
+              <div style={{ fontSize: 10, color: C.textMuted, marginBottom: 6, fontFamily: "'DM Mono', monospace" }}>摘要</div>
+              <input type="text" value={jeForm.desc} onChange={e => setJeForm(f => ({ ...f, desc: e.target.value }))} placeholder="取引の説明..." style={inputStyle} />
+            </div>
+            <button onClick={handleJeSubmit} style={{
+              display: "flex", alignItems: "center", gap: 6, padding: "10px 20px",
+              background: C.accent, color: C.bg, border: "none", borderRadius: 10,
+              fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "'Syne', sans-serif",
+              transition: "all 0.3s", whiteSpace: "nowrap", height: 42,
+            }}
+              onMouseEnter={e => { e.currentTarget.style.boxShadow = `0 4px 20px ${C.accent}40`; }}
+              onMouseLeave={e => { e.currentTarget.style.boxShadow = "none"; }}
+            ><Plus size={14} strokeWidth={2.5} /> 仕訳登録</button>
+          </div>
+        </Glass>
+
+        {/* 仕訳一覧 */}
+        <Glass delay={0.2} style={{ padding: "22px 26px" }}>
+          <div style={{ fontSize: 10, fontWeight: 600, color: C.textMuted, letterSpacing: "0.1em", fontFamily: "'DM Mono', monospace", marginBottom: 16 }}>仕訳一覧</div>
+          {/* テーブルヘッダ */}
+          <div style={{ display: "grid", gridTemplateColumns: "100px 100px 1fr 1fr 120px 1.5fr", gap: 10, padding: "10px 12px", background: C.bgGlassBright, borderRadius: 10, marginBottom: 6 }}>
+            {["伝票No", "日付", "借方科目", "貸方科目", "金額", "摘要"].map(h => (
+              <span key={h} style={{ fontSize: 10, fontWeight: 600, color: C.textMuted, fontFamily: "'DM Mono', monospace", letterSpacing: "0.06em" }}>{h}</span>
+            ))}
+          </div>
+          {/* テーブル行 */}
+          {entries.map((e, i) => (
+            <div key={e.id} style={{
+              display: "grid", gridTemplateColumns: "100px 100px 1fr 1fr 120px 1.5fr", gap: 10,
+              padding: "12px 12px", borderBottom: i < entries.length - 1 ? `1px solid ${C.border}` : "none",
+              alignItems: "center", animation: `revealUp 0.3s ${i * 0.02}s both`,
+            }}>
+              <span style={{ fontSize: 11, color: C.accent, fontFamily: "'DM Mono', monospace", fontWeight: 600 }}>{e.entryNo}</span>
+              <span style={{ fontSize: 11, color: C.textSub, fontFamily: "'DM Mono', monospace" }}>{e.entryDate}</span>
+              <span style={{ fontSize: 12, color: C.text }}>{getAccountName(e.debitAccountId)}</span>
+              <span style={{ fontSize: 12, color: C.text }}>{getAccountName(e.creditAccountId)}</span>
+              <span style={{ fontSize: 12, color: C.text, fontFamily: "'DM Mono', monospace", textAlign: "right" }}>{fmt(e.amount)}</span>
+              <span style={{ fontSize: 11.5, color: C.textSub }}>{e.description}</span>
+            </div>
+          ))}
+          {entries.length === 0 && (
+            <div style={{ padding: "30px 0", textAlign: "center", color: C.textMuted, fontSize: 12 }}>仕訳データがありません</div>
+          )}
+        </Glass>
+      </>)}
+
+      {/* ★ 試算表ビュー */}
+      {view === "trial-balance" && (<>
+        <Glass delay={0} style={{ padding: "22px 26px" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
+            <div>
+              <div style={{ fontSize: 20, fontWeight: 300, color: C.text, fontFamily: "'Syne', sans-serif" }}>残高試算表</div>
+              <div style={{ fontSize: 11, color: C.textMuted, fontFamily: "'DM Mono', monospace", marginTop: 4 }}>集計期間: 全期間</div>
+            </div>
+            <Scale size={22} color={C.accent} style={{ opacity: 0.4 }} />
+          </div>
+
+          {/* テーブルヘッダ */}
+          <div style={{ display: "grid", gridTemplateColumns: "80px 1fr 130px 130px 130px", gap: 10, padding: "12px 14px", background: C.bgGlassBright, borderRadius: 10, marginBottom: 4 }}>
+            {["コード", "勘定科目", "借方合計", "貸方合計", "残高"].map(h => (
+              <span key={h} style={{ fontSize: 10, fontWeight: 600, color: C.textMuted, fontFamily: "'DM Mono', monospace", letterSpacing: "0.06em", textAlign: h !== "コード" && h !== "勘定科目" ? "right" : "left" }}>{h}</span>
+            ))}
+          </div>
+
+          {categoryOrder.map(cat => {
+            const catAccounts = trialBalance.filter(a => a.category === cat);
+            if (catAccounts.length === 0) return null;
+            const catDebit = catAccounts.reduce((s, a) => s + a.debitSum, 0);
+            const catCredit = catAccounts.reduce((s, a) => s + a.creditSum, 0);
+            const catBalance = catAccounts.reduce((s, a) => s + a.balance, 0);
+            const catColor = cat === 'asset' ? C.info : cat === 'liability' ? C.warning : cat === 'equity' ? C.accent : cat === 'revenue' ? C.success : C.error;
+
+            return (
+              <div key={cat}>
+                {/* カテゴリヘッダ */}
+                <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "14px 14px 6px", marginTop: 8 }}>
+                  <div style={{ width: 8, height: 8, borderRadius: "50%", background: catColor }} />
+                  <span style={{ fontSize: 11, fontWeight: 700, color: catColor, letterSpacing: "0.08em", fontFamily: "'DM Mono', monospace" }}>{categoryLabels[cat]}</span>
+                </div>
+
+                {/* 勘定科目行 */}
+                {catAccounts.map((a, i) => (
+                  <div key={a.id} style={{
+                    display: "grid", gridTemplateColumns: "80px 1fr 130px 130px 130px", gap: 10,
+                    padding: "10px 14px", borderBottom: `1px solid ${C.border}`, alignItems: "center",
+                  }}>
+                    <span style={{ fontSize: 11, color: C.textMuted, fontFamily: "'DM Mono', monospace" }}>{a.code}</span>
+                    <span style={{ fontSize: 12.5, color: C.text }}>{a.name}</span>
+                    <span style={{ fontSize: 12, color: a.debitSum > 0 ? C.text : C.textMuted, fontFamily: "'DM Mono', monospace", textAlign: "right" }}>{a.debitSum > 0 ? fmt(a.debitSum) : '—'}</span>
+                    <span style={{ fontSize: 12, color: a.creditSum > 0 ? C.text : C.textMuted, fontFamily: "'DM Mono', monospace", textAlign: "right" }}>{a.creditSum > 0 ? fmt(a.creditSum) : '—'}</span>
+                    <span style={{ fontSize: 12, fontWeight: 600, color: a.balance >= 0 ? C.text : C.error, fontFamily: "'DM Mono', monospace", textAlign: "right" }}>{fmt(a.balance)}</span>
+                  </div>
+                ))}
+
+                {/* カテゴリ小計 */}
+                <div style={{
+                  display: "grid", gridTemplateColumns: "80px 1fr 130px 130px 130px", gap: 10,
+                  padding: "10px 14px", background: `${catColor}08`, borderRadius: 6, marginTop: 2,
+                }}>
+                  <span />
+                  <span style={{ fontSize: 11, fontWeight: 700, color: catColor, fontFamily: "'DM Mono', monospace" }}>{categoryLabels[cat]}合計</span>
+                  <span style={{ fontSize: 12, fontWeight: 700, color: catColor, fontFamily: "'DM Mono', monospace", textAlign: "right" }}>{fmt(catDebit)}</span>
+                  <span style={{ fontSize: 12, fontWeight: 700, color: catColor, fontFamily: "'DM Mono', monospace", textAlign: "right" }}>{fmt(catCredit)}</span>
+                  <span style={{ fontSize: 12, fontWeight: 700, color: catColor, fontFamily: "'DM Mono', monospace", textAlign: "right" }}>{fmt(catBalance)}</span>
+                </div>
+              </div>
+            );
+          })}
+
+          {/* バランスチェック行 */}
+          {(() => {
+            const grandDebit = trialBalance.reduce((s, a) => s + a.debitSum, 0);
+            const grandCredit = trialBalance.reduce((s, a) => s + a.creditSum, 0);
+            const isBalanced = grandDebit === grandCredit;
+            return (
+              <div style={{
+                display: "grid", gridTemplateColumns: "80px 1fr 130px 130px 130px", gap: 10,
+                padding: "14px 14px", marginTop: 12, borderTop: `2px solid ${C.accent}`,
+                background: isBalanced ? C.successBg : C.errorBg, borderRadius: "0 0 10px 10px",
+              }}>
+                <span />
+                <span style={{ fontSize: 13, fontWeight: 700, color: C.text, display: "flex", alignItems: "center", gap: 8 }}>
+                  合計
+                  {isBalanced ? (
+                    <Tag bg={C.successBg} c={C.success} label="貸借一致" icon={CheckCircle2} />
+                  ) : (
+                    <Tag bg={C.errorBg} c={C.error} label="貸借不一致" icon={AlertCircle} />
+                  )}
+                </span>
+                <span style={{ fontSize: 14, fontWeight: 700, color: C.text, fontFamily: "'Syne', sans-serif", textAlign: "right" }}>{fmt(grandDebit)}</span>
+                <span style={{ fontSize: 14, fontWeight: 700, color: C.text, fontFamily: "'Syne', sans-serif", textAlign: "right" }}>{fmt(grandCredit)}</span>
+                <span />
+              </div>
+            );
+          })()}
+        </Glass>
       </>)}
     </div>
   );
@@ -1081,6 +1354,137 @@ const PayrollPage = ({ salary }) => {
 };
 
 /* ════════════════════════════════════════
+   LOGIN PAGE
+   ════════════════════════════════════════ */
+const LoginPage = ({ onAuth }) => {
+  const [isLogin, setIsLogin] = useState(true);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [displayName, setDisplayName] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [hoverBtn, setHoverBtn] = useState(false);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError("");
+    setLoading(true);
+    try {
+      if (isLogin) {
+        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        if (error) throw error;
+      } else {
+        const { error } = await supabase.auth.signUp({
+          email,
+          password,
+          options: { data: { display_name: displayName } },
+        });
+        if (error) throw error;
+      }
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const inputStyle = {
+    width: "100%", padding: "12px 14px 12px 42px", borderRadius: 12,
+    border: `1px solid ${C.border}`, background: C.bgGlass,
+    fontSize: 14, fontFamily: "'Outfit', sans-serif", color: C.text,
+    outline: "none", transition: "border-color 0.2s",
+  };
+
+  const iconWrap = {
+    position: "absolute", left: 14, top: "50%", transform: "translateY(-50%)",
+    color: C.textMuted, display: "flex", pointerEvents: "none",
+  };
+
+  return (
+    <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: C.bg, position: "relative", overflow: "hidden" }}>
+      <div style={{ position: "absolute", top: "-10%", left: "15%", width: "45vw", height: "45vw", borderRadius: "50%", background: `radial-gradient(circle, ${C.accent}08 0%, transparent 65%)`, filter: "blur(60px)" }} />
+      <div style={{ position: "absolute", bottom: "5%", right: "10%", width: "35vw", height: "35vw", borderRadius: "50%", background: "radial-gradient(circle, rgba(103,184,245,0.04) 0%, transparent 65%)", filter: "blur(60px)" }} />
+
+      <div style={{ width: 400, animation: "revealUp 0.55s both cubic-bezier(0.16,1,0.3,1)", position: "relative", zIndex: 1 }}>
+        <div style={{ textAlign: "center", marginBottom: 36 }}>
+          <div style={{ width: 56, height: 56, borderRadius: 16, background: `linear-gradient(135deg, ${C.accent}, ${C.accentDim})`, display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: 24, fontWeight: 800, color: "#fff", fontFamily: "'Syne', sans-serif", boxShadow: `0 8px 32px ${C.accent}30`, marginBottom: 16 }}>B</div>
+          <h1 style={{ fontSize: 28, fontWeight: 300, color: C.text, fontFamily: "'Syne', sans-serif", letterSpacing: "-0.02em" }}>BizFlow</h1>
+          <p style={{ fontSize: 13, color: C.textMuted, marginTop: 6 }}>業務管理プラットフォーム</p>
+        </div>
+
+        <Glass hover={false} style={{ padding: "32px 28px" }}>
+          <div style={{ display: "flex", marginBottom: 24, background: C.bgGlassBright, borderRadius: 10, padding: 3 }}>
+            {["ログイン", "サインアップ"].map((label, i) => {
+              const active = i === 0 ? isLogin : !isLogin;
+              return (
+                <button key={label} onClick={() => { setIsLogin(i === 0); setError(""); }}
+                  style={{
+                    flex: 1, padding: "10px 0", borderRadius: 8, border: "none", cursor: "pointer",
+                    background: active ? "#fff" : "transparent",
+                    color: active ? C.text : C.textMuted,
+                    fontSize: 13, fontWeight: active ? 600 : 400, fontFamily: "'Outfit', sans-serif",
+                    boxShadow: active ? "0 2px 8px rgba(0,0,0,0.06)" : "none",
+                    transition: "all 0.25s cubic-bezier(0.16,1,0.3,1)",
+                  }}
+                >{label}</button>
+              );
+            })}
+          </div>
+
+          <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+            {!isLogin && (
+              <div style={{ position: "relative" }}>
+                <div style={iconWrap}><User size={16} /></div>
+                <input type="text" placeholder="表示名" value={displayName} onChange={e => setDisplayName(e.target.value)}
+                  style={inputStyle} onFocus={e => e.target.style.borderColor = C.accent} onBlur={e => e.target.style.borderColor = C.border} />
+              </div>
+            )}
+            <div style={{ position: "relative" }}>
+              <div style={iconWrap}><Mail size={16} /></div>
+              <input type="email" placeholder="メールアドレス" value={email} onChange={e => setEmail(e.target.value)} required
+                style={inputStyle} onFocus={e => e.target.style.borderColor = C.accent} onBlur={e => e.target.style.borderColor = C.border} />
+            </div>
+            <div style={{ position: "relative" }}>
+              <div style={iconWrap}><Lock size={16} /></div>
+              <input type="password" placeholder="パスワード" value={password} onChange={e => setPassword(e.target.value)} required minLength={6}
+                style={inputStyle} onFocus={e => e.target.style.borderColor = C.accent} onBlur={e => e.target.style.borderColor = C.border} />
+            </div>
+
+            {error && (
+              <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 14px", borderRadius: 10, background: C.errorBg, color: C.error, fontSize: 12, fontWeight: 500 }}>
+                <AlertCircle size={14} />
+                <span>{error}</span>
+              </div>
+            )}
+
+            <button type="submit" disabled={loading}
+              onMouseEnter={() => setHoverBtn(true)} onMouseLeave={() => setHoverBtn(false)}
+              style={{
+                padding: "13px 0", borderRadius: 12, border: "none", cursor: loading ? "not-allowed" : "pointer",
+                background: hoverBtn && !loading ? C.accentDim : `linear-gradient(135deg, ${C.accent}, ${C.accentDim})`,
+                color: "#fff", fontSize: 14, fontWeight: 600, fontFamily: "'Outfit', sans-serif",
+                boxShadow: `0 4px 16px ${C.accent}30`, transition: "all 0.25s cubic-bezier(0.16,1,0.3,1)",
+                opacity: loading ? 0.7 : 1, marginTop: 4,
+              }}
+            >
+              {loading ? "処理中..." : isLogin ? "ログイン" : "アカウント作成"}
+            </button>
+          </form>
+        </Glass>
+
+        <p style={{ textAlign: "center", fontSize: 11, color: C.textMuted, marginTop: 20 }}>
+          {isLogin ? "アカウントをお持ちでない方は" : "既にアカウントをお持ちの方は"}
+          <button onClick={() => { setIsLogin(!isLogin); setError(""); }}
+            style={{ background: "none", border: "none", color: C.accent, cursor: "pointer", fontSize: 11, fontWeight: 600, fontFamily: "'Outfit', sans-serif", textDecoration: "underline", marginLeft: 4 }}>
+            {isLogin ? "サインアップ" : "ログイン"}
+          </button>
+        </p>
+      </div>
+    </div>
+  );
+};
+
+/* ════════════════════════════════════════
    SHELL
    ════════════════════════════════════════ */
 const navItems = [
@@ -1098,10 +1502,31 @@ const pages = {
 };
 
 export default function App() {
+  const [session, setSession] = useState(null);
+  const [authLoading, setAuthLoading] = useState(true);
   const [active, setActive] = useState("dashboard");
   const [hoveredNav, setHoveredNav] = useState(null);
+  const [hoverLogout, setHoverLogout] = useState(false);
   const { loading, data } = useSupabaseData();
   const Page = pages[active];
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      setAuthLoading(false);
+    });
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+    });
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+  };
+
+  const userDisplayName = session?.user?.user_metadata?.display_name || session?.user?.email?.split("@")[0] || "";
+  const userInitial = userDisplayName ? userDisplayName.charAt(0).toUpperCase() : "U";
 
   const pageProps = data ? {
     dashboard: { clients: data.clients, receivables: data.receivables, products: data.products, deposits: data.deposits },
@@ -1109,27 +1534,49 @@ export default function App() {
     receivables: { receivables: data.receivables },
     invoice: { clients: data.clients, invoiceTemplateItems: data.invoiceTemplateItems, myCompany: data.myCompany },
     inventory: { products: data.products },
-    accounting: { receivables: data.receivables, deposits: data.deposits },
+    accounting: { receivables: data.receivables, deposits: data.deposits, accounts: data.accounts, journalEntries: data.journalEntries },
     payroll: { salary: data.salary },
   } : null;
 
+  const globalStyles = `
+    @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Outfit:wght@200;300;400;500;600;700&family=Syne:wght@200;300;400;500;600;700;800&display=swap');
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body, #root { height: 100%; }
+    body { font-family: 'Outfit', sans-serif; background: ${C.bg}; color: ${C.text}; -webkit-font-smoothing: antialiased; }
+    @keyframes revealUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    ::-webkit-scrollbar { width: 5px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.06); border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(0,0,0,0.12); }
+    input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+    input[type=number] { -moz-appearance: textfield; }
+    select option { background: ${C.bg}; color: ${C.text}; }
+  `;
+
+  if (authLoading) {
+    return (
+      <>
+        <style>{globalStyles}</style>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100vh", background: C.bg }}>
+          <LoadingSpinner />
+        </div>
+      </>
+    );
+  }
+
+  if (!session) {
+    return (
+      <>
+        <style>{globalStyles}</style>
+        <LoginPage />
+      </>
+    );
+  }
+
   return (
     <>
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Outfit:wght@200;300;400;500;600;700&family=Syne:wght@200;300;400;500;600;700;800&display=swap');
-        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
-        html, body, #root { height: 100%; }
-        body { font-family: 'Outfit', sans-serif; background: ${C.bg}; color: ${C.text}; -webkit-font-smoothing: antialiased; }
-        @keyframes revealUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
-        @keyframes spin { to { transform: rotate(360deg); } }
-        ::-webkit-scrollbar { width: 5px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.06); border-radius: 3px; }
-        ::-webkit-scrollbar-thumb:hover { background: rgba(0,0,0,0.12); }
-        input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
-        input[type=number] { -moz-appearance: textfield; }
-        select option { background: ${C.bg}; color: ${C.text}; }
-      `}</style>
+      <style>{globalStyles}</style>
 
       <div style={{ position: "fixed", inset: 0, pointerEvents: "none", zIndex: 0 }}>
         <div style={{ position: "absolute", top: "-10%", left: "15%", width: "45vw", height: "45vw", borderRadius: "50%", background: `radial-gradient(circle, ${C.accent}06 0%, transparent 65%)`, filter: "blur(60px)" }} />
@@ -1176,9 +1623,18 @@ export default function App() {
                 onMouseEnter={e => e.currentTarget.style.color = C.text} onMouseLeave={e => e.currentTarget.style.color = C.textMuted}
               ><Bell size={16} strokeWidth={1.8} /><span style={{ position: "absolute", top: 3, right: 3, width: 6, height: 6, background: C.error, borderRadius: "50%", border: `1.5px solid ${C.bg}` }} /></button>
               <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                <div style={{ width: 28, height: 28, borderRadius: 8, background: `linear-gradient(135deg, ${C.accent}25, ${C.accent}10)`, border: `1px solid ${C.borderAccent}`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 700, color: C.accent, fontFamily: "'DM Mono', monospace" }}>中</div>
-                <span style={{ fontSize: 12, color: C.textSub }}>中村</span>
+                <div style={{ width: 28, height: 28, borderRadius: 8, background: `linear-gradient(135deg, ${C.accent}25, ${C.accent}10)`, border: `1px solid ${C.borderAccent}`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 700, color: C.accent, fontFamily: "'DM Mono', monospace" }}>{userInitial}</div>
+                <span style={{ fontSize: 12, color: C.textSub }}>{userDisplayName}</span>
               </div>
+              <button onClick={handleLogout}
+                onMouseEnter={() => setHoverLogout(true)} onMouseLeave={() => setHoverLogout(false)}
+                style={{
+                  background: hoverLogout ? C.errorBg : "transparent", border: "none", cursor: "pointer",
+                  color: hoverLogout ? C.error : C.textMuted, padding: 6, borderRadius: 8, display: "flex",
+                  alignItems: "center", justifyContent: "center", transition: "all 0.2s",
+                }}
+                title="ログアウト"
+              ><LogOut size={15} strokeWidth={1.8} /></button>
             </div>
           </header>
           <div key={active} style={{ flex: 1, overflow: "auto", padding: "24px 28px" }}>

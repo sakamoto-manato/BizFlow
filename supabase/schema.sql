@@ -108,8 +108,30 @@ FROM receivables r
 JOIN clients c ON c.id = r.client_id;
 
 -- ============================================
--- RLS — anon ロールに全操作を許可
--- （認証機能追加時に厳格化する）
+-- profiles（ユーザープロフィール）
+-- ============================================
+CREATE TABLE profiles (
+  id           uuid PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+  display_name text NOT NULL DEFAULT '',
+  created_at   timestamptz NOT NULL DEFAULT now()
+);
+
+-- ユーザー作成時に自動で profiles レコードを生成するトリガー
+CREATE OR REPLACE FUNCTION public.handle_new_user()
+RETURNS trigger AS $$
+BEGIN
+  INSERT INTO public.profiles (id, display_name)
+  VALUES (NEW.id, COALESCE(NEW.raw_user_meta_data->>'display_name', ''));
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+CREATE TRIGGER on_auth_user_created
+  AFTER INSERT ON auth.users
+  FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
+
+-- ============================================
+-- RLS — authenticated ロールに全操作を許可
 -- ============================================
 ALTER TABLE clients               ENABLE ROW LEVEL SECURITY;
 ALTER TABLE receivables            ENABLE ROW LEVEL SECURITY;
@@ -120,16 +142,21 @@ ALTER TABLE salary_items           ENABLE ROW LEVEL SECURITY;
 ALTER TABLE salary_history         ENABLE ROW LEVEL SECURITY;
 ALTER TABLE invoice_template_items ENABLE ROW LEVEL SECURITY;
 ALTER TABLE company_profile        ENABLE ROW LEVEL SECURITY;
+ALTER TABLE profiles               ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "anon_all" ON clients               FOR ALL TO anon USING (true) WITH CHECK (true);
-CREATE POLICY "anon_all" ON receivables            FOR ALL TO anon USING (true) WITH CHECK (true);
-CREATE POLICY "anon_all" ON products               FOR ALL TO anon USING (true) WITH CHECK (true);
-CREATE POLICY "anon_all" ON deposits               FOR ALL TO anon USING (true) WITH CHECK (true);
-CREATE POLICY "anon_all" ON employees              FOR ALL TO anon USING (true) WITH CHECK (true);
-CREATE POLICY "anon_all" ON salary_items           FOR ALL TO anon USING (true) WITH CHECK (true);
-CREATE POLICY "anon_all" ON salary_history         FOR ALL TO anon USING (true) WITH CHECK (true);
-CREATE POLICY "anon_all" ON invoice_template_items FOR ALL TO anon USING (true) WITH CHECK (true);
-CREATE POLICY "anon_all" ON company_profile        FOR ALL TO anon USING (true) WITH CHECK (true);
+CREATE POLICY "authenticated_all" ON clients               FOR ALL TO authenticated USING (true) WITH CHECK (true);
+CREATE POLICY "authenticated_all" ON receivables            FOR ALL TO authenticated USING (true) WITH CHECK (true);
+CREATE POLICY "authenticated_all" ON products               FOR ALL TO authenticated USING (true) WITH CHECK (true);
+CREATE POLICY "authenticated_all" ON deposits               FOR ALL TO authenticated USING (true) WITH CHECK (true);
+CREATE POLICY "authenticated_all" ON employees              FOR ALL TO authenticated USING (true) WITH CHECK (true);
+CREATE POLICY "authenticated_all" ON salary_items           FOR ALL TO authenticated USING (true) WITH CHECK (true);
+CREATE POLICY "authenticated_all" ON salary_history         FOR ALL TO authenticated USING (true) WITH CHECK (true);
+CREATE POLICY "authenticated_all" ON invoice_template_items FOR ALL TO authenticated USING (true) WITH CHECK (true);
+CREATE POLICY "authenticated_all" ON company_profile        FOR ALL TO authenticated USING (true) WITH CHECK (true);
+
+-- profiles: 自分のプロフィールのみ参照・更新可能
+CREATE POLICY "profiles_select_own" ON profiles FOR SELECT TO authenticated USING (auth.uid() = id);
+CREATE POLICY "profiles_update_own" ON profiles FOR UPDATE TO authenticated USING (auth.uid() = id) WITH CHECK (auth.uid() = id);
 
 -- ============================================
 -- SEED DATA
@@ -210,3 +237,77 @@ INSERT INTO invoice_template_items (name, qty, unit_price, tax_rate, sort_order)
 -- company_profile
 INSERT INTO company_profile (name, t_no, address, tel) VALUES
   ('株式会社サイバーバズ', 'T2011001050463', '東京都渋谷区桜丘町12-10', '03-5728-4062');
+
+-- ============================================
+-- 11. accounts（勘定科目マスタ）
+-- ============================================
+CREATE TABLE accounts (
+  id         bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  code       text NOT NULL UNIQUE,
+  name       text NOT NULL,
+  category   text NOT NULL,  -- 'asset' | 'liability' | 'equity' | 'revenue' | 'expense'
+  sort_order integer NOT NULL DEFAULT 0
+);
+
+-- 12. journal_entries（仕訳帳）
+CREATE TABLE journal_entries (
+  id                bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  entry_date        date NOT NULL,
+  entry_no          text NOT NULL UNIQUE,
+  description       text NOT NULL DEFAULT '',
+  debit_account_id  bigint NOT NULL REFERENCES accounts(id),
+  credit_account_id bigint NOT NULL REFERENCES accounts(id),
+  amount            bigint NOT NULL,
+  created_at        timestamptz NOT NULL DEFAULT now()
+);
+
+-- RLS
+ALTER TABLE accounts        ENABLE ROW LEVEL SECURITY;
+ALTER TABLE journal_entries ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "authenticated_all" ON accounts        FOR ALL TO authenticated USING (true) WITH CHECK (true);
+CREATE POLICY "authenticated_all" ON journal_entries  FOR ALL TO authenticated USING (true) WITH CHECK (true);
+
+-- ============================================
+-- SEED: accounts（勘定科目 18科目）
+-- ============================================
+INSERT INTO accounts (id, code, name, category, sort_order)
+OVERRIDING SYSTEM VALUE VALUES
+  -- 資産
+  (1,  '101', '現金',       'asset',     1),
+  (2,  '102', '普通預金',   'asset',     2),
+  (3,  '110', '売掛金',     'asset',     3),
+  (4,  '120', '商品',       'asset',     4),
+  -- 負債
+  (5,  '201', '買掛金',     'liability', 5),
+  (6,  '202', '未払金',     'liability', 6),
+  (7,  '210', '預り金',     'liability', 7),
+  -- 純資産
+  (8,  '301', '資本金',     'equity',    8),
+  -- 収益
+  (9,  '401', '売上高',     'revenue',   9),
+  (10, '410', '受取利息',   'revenue',  10),
+  -- 費用
+  (11, '501', '仕入高',     'expense',  11),
+  (12, '510', '給与手当',   'expense',  12),
+  (13, '520', '法定福利費', 'expense',  13),
+  (14, '530', '旅費交通費', 'expense',  14),
+  (15, '540', '通信費',     'expense',  15),
+  (16, '550', '消耗品費',   'expense',  16),
+  (17, '560', '支払手数料', 'expense',  17),
+  (18, '570', '地代家賃',   'expense',  18);
+
+SELECT setval(pg_get_serial_sequence('accounts', 'id'), (SELECT MAX(id) FROM accounts));
+
+-- ============================================
+-- SEED: journal_entries（サンプル仕訳 5件）
+-- ============================================
+INSERT INTO journal_entries (id, entry_date, entry_no, description, debit_account_id, credit_account_id, amount)
+OVERRIDING SYSTEM VALUE VALUES
+  (1, '2026-01-15', 'JE-2026-001', '東京テクノロジーズ売上計上',   3,  9, 1200000),
+  (2, '2026-01-31', 'JE-2026-002', '東京テクノロジーズ入金',       2,  3, 1200000),
+  (3, '2026-02-05', 'JE-2026-003', '名古屋ロジスティクス仕入',    11,  5,  800000),
+  (4, '2026-02-25', 'JE-2026-004', '中村太郎 2月給与',            12,  2,  380000),
+  (5, '2026-02-28', 'JE-2026-005', '社会保険料 2月分',            13,  7,   71000);
+
+SELECT setval(pg_get_serial_sequence('journal_entries', 'id'), (SELECT MAX(id) FROM journal_entries));
