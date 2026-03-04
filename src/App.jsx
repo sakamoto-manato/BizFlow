@@ -1358,8 +1358,8 @@ const PayrollPage = ({ salary }) => {
    ════════════════════════════════════════ */
 const LoginPage = ({ onAuth }) => {
   const [isLogin, setIsLogin] = useState(true);
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [email, setEmail] = useState("admin@bizflow.jp");
+  const [password, setPassword] = useState("password123");
   const [displayName, setDisplayName] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
