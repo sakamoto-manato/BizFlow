@@ -1367,7 +1367,7 @@ const LoginPage = ({ onAuth }) => {
 
   // デモ用アカウント（仮）
   const DEMO_ACCOUNTS = [
-    { id: 1, email: 'admin@bizflow.jp', password: 'password123', display_name: '管理者' },
+    { id: 1, email: 'admin@bizflow.jp', password: 'password123', display_name: '管理者', user_id: 'bizflow-admin', role: '管理マスター' },
   ];
 
   const handleSubmit = async (e) => {
@@ -1378,12 +1378,13 @@ const LoginPage = ({ onAuth }) => {
       if (isLogin) {
         const found = DEMO_ACCOUNTS.find(a => a.email === email && a.password === password);
         if (!found) throw new Error("メールアドレスまたはパスワードが正しくありません");
-        const user = { id: found.id, email: found.email, display_name: found.display_name };
+        const user = { id: found.id, email: found.email, display_name: found.display_name, user_id: found.user_id, role: found.role };
         localStorage.setItem('user', JSON.stringify(user));
         onAuth(user);
       } else {
         if (DEMO_ACCOUNTS.some(a => a.email === email)) throw new Error("このメールアドレスは既に登録されています");
-        const user = { id: Date.now(), email, display_name: displayName || email.split('@')[0] };
+        const emailPrefix = email.split('@')[0] || 'user';
+        const user = { id: Date.now(), email, display_name: displayName || emailPrefix, user_id: `${emailPrefix}-user`, role: '一般' };
         localStorage.setItem('user', JSON.stringify(user));
         onAuth(user);
       }
@@ -1524,6 +1525,9 @@ export default function App() {
 
   const userDisplayName = user?.display_name || user?.email?.split("@")[0] || "";
   const userInitial = userDisplayName ? userDisplayName.charAt(0).toUpperCase() : "U";
+  const loginCompany = data?.myCompany?.name || "—";
+  const loginUserId = user?.user_id || user?.email?.split("@")[0] || user?.id?.toString() || "—";
+  const loginRole = user?.role || "—";
 
   const pageProps = data ? {
     dashboard: { clients: data.clients, receivables: data.receivables, products: data.products, deposits: data.deposits },
@@ -1604,7 +1608,12 @@ export default function App() {
               <span style={{ fontSize: 10, color: C.textMuted, fontFamily: "'DM Mono', monospace", background: C.bgGlass, padding: "2px 8px", borderRadius: 4 }}>v1.0</span>
               <span style={{ fontSize: 9, color: C.accent, fontFamily: "'DM Mono', monospace", background: C.bgAccentSoft, padding: "2px 8px", borderRadius: 4, marginLeft: 4, border: `1px solid ${C.borderAccent}` }}>インボイス対応</span>
             </div>
-            <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 20 }}>
+              <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 2, fontSize: 11, color: C.textSub, fontFamily: "'Outfit', sans-serif" }}>
+                <div>ログイン企業: <span style={{ fontWeight: 600, color: C.text }}>{loginCompany}</span></div>
+                <div>ログインユーザー: <span style={{ fontWeight: 600, color: C.text }}>{userDisplayName}</span> 【ID:{loginUserId}】</div>
+                <div>ユーザー権限: <span style={{ fontWeight: 600, color: C.text }}>{loginRole}</span></div>
+              </div>
               <button style={{ position: "relative", background: "transparent", border: "none", cursor: "pointer", color: C.textMuted, padding: 4, display: "flex", transition: "color 0.2s" }}
                 onMouseEnter={e => e.currentTarget.style.color = C.text} onMouseLeave={e => e.currentTarget.style.color = C.textMuted}
               ><Bell size={16} strokeWidth={1.8} /><span style={{ position: "absolute", top: 3, right: 3, width: 6, height: 6, background: C.error, borderRadius: "50%", border: `1.5px solid ${C.bg}` }} /></button>
